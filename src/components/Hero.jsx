@@ -6,8 +6,13 @@ const Hero = () => {
     <header className="w-full flex 
     justify-center items-center flex-col">
       <nav className='flex justify-between items-center w-full mb-10 pt-3'>
+        <button>
         <img src={ logo } alt="sumz_logo"
-        className='w-28 object-contain'/>
+        className='w-28 object-contain'
+        onClick={() => window.location.reload ('./') }
+        />
+        </button>
+
 
         <button 
           type='button'
