@@ -7,16 +7,21 @@ import './App.css';
 const App = () => {
   return (
     <main>
-      <div className='main' >
-        <div className='gradient' ></div>
+      {/* Background Gradient */}
+      <div className='main'>
+        <div className='gradient'></div>
       </div>
 
-      <div className='app' >
-        <Hero/>
-        <Demo/>
+      {/* App Content */}
+      <div className='app'>
+        {/* Hero Section */}
+        <Hero />
+
+        {/* Demo Section */}
+        <Demo />
       </div>
     </main>
-  )
+  );
 }
 
 export default App;

@@ -1,15 +1,21 @@
 import { useEffect, useState } from 'react';
-import { linkIcon, copy, loader } from '../assets';
+import { linkIcon, copy, loader, tick } from '../assets';
 import { useLazyGetSummaryQuery } from '../services/article';
 
 const Demo = () => {
+  // State for the current article URL and its summary
   const [article, setArticle] = useState({
     url: '',
     summary: '',
   });
 
+  // State for storing all the articles
   const [allArticles, setAllArticles] = useState([]);
 
+  // State for tracking the copied URL
+  const [copied, setCopied] = useState("");
+
+  // Function to handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -18,9 +24,11 @@ const Demo = () => {
       return;
     }
 
+    // Call the API to retrieve the article summary
     const { data } = await getSummary({ articleUrl: article.url });
 
     if (data && data.summary) {
+      // If summary is available, update the state and store it in local storage
       const newArticle = { ...article, summary: data.summary };
       const updatedArticles = [newArticle, ...allArticles];
 
@@ -34,8 +42,10 @@ const Demo = () => {
     }
   };
 
+  // Fetch article summaries using a custom query hook
   const [getSummary, { error, isFetching }] = useLazyGetSummaryQuery();
 
+  // Load articles from local storage on component mount
   useEffect(() => {
     const articlesFromLocalStorage = JSON.parse(localStorage.getItem('articles'));
     if (articlesFromLocalStorage) {
@@ -43,9 +53,16 @@ const Demo = () => {
     }
   }, []);
 
+  // Function to handle URL copying
+  const handleCopy = (copyURL) => {
+    setCopied(copyURL);
+    navigator.clipboard.writeText(copyURL);
+    setTimeout(() => setCopied(""), 3000); // Reset copied state after 3 seconds
+  };
+
   return (
     <section className='mt-16 w-full max-w-xl'>
-      {/* search */}
+      {/* Search */}
       <div className='flex flex-col w-full gap-2'>
         <form className='relative flex justify-center items-center' onSubmit={handleSubmit}>
           <img src={linkIcon} alt='link_icon' className='absolute left-0 my-2 ml-3 w-5' />
@@ -75,9 +92,10 @@ const Demo = () => {
               onClick={() => setArticle(item)}
               className='link_card'
             >
-              <div className='copy_btn'>
+              <div className='copy_btn' onClick={() => handleCopy(item.url)}>
+                {/* Show copy or tick icon based on whether the URL is copied */}
                 <img
-                  src={copy}
+                  src={copied === item.url ? tick : copy}
                   alt='copy_icon'
                   className='w-[40%] h-[40%] object-contain'
                 />
@@ -90,22 +108,31 @@ const Demo = () => {
         </div>
       </div>
 
-      {/* display results */}
+      {/* Display results */}
       <div className='my-10 max-w-full flex justify-center items-center'>
         {isFetching ? (
           <img src={loader} alt='loader' className='w-20 h-20 object-contain' />
         ) : error ? (
           <p className='font-inter font-bold text-black text-center'>
-            Opps, something went wrong. Please try again
+            Oops, something went wrong. Please try again
             <br />.
             <span className='font-satoshi font-normal text-gray-700'>
               {error?.data?.error}
             </span>
           </p>
         ) : (
-          <p className='font-inter font-bold text-black text-center'>
-            {article.summary}
-          </p>
+          article.summary && (
+            <div className='flex flex-col gap-3'>
+              <h2 className='font-satoshi font-bold text-gray-600 text-xl'>
+                Article <span className='blue_gradient'>Summary</span>
+              </h2>
+              <div className='summary_box'>
+                <p className='font-inter font-medium tex-sm text-gray-700'>
+                  {article.summary}
+                </p>
+              </div>
+            </div>
+          )
         )}
       </div>
     </section>
