@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { linkIcon, copy, loader, tick } from '../assets';
 import { useLazyGetSummaryQuery } from '../services/article';
+import { langdetect } from 'langdetect'; // Import the langdetect library
+
 
 const Demo = () => {
   // State for the current article URL and its summary
