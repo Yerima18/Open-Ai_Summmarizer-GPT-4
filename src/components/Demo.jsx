@@ -1,8 +1,7 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { linkIcon, copy, loader, tick } from '../assets';
 import { useLazyGetSummaryQuery } from '../services/article';
 import { langdetect } from 'langdetect'; // Import the langdetect library
-
 
 const Demo = () => {
   // State for the current article URL and its summary
@@ -15,7 +14,7 @@ const Demo = () => {
   const [allArticles, setAllArticles] = useState([]);
 
   // State for tracking the copied URL
-  const [copied, setCopied] = useState("");
+  const [copied, setCopied] = useState('');
 
   // Function to handle form submission
   const handleSubmit = async (e) => {
@@ -26,23 +25,39 @@ const Demo = () => {
       return;
     }
 
-    // Call the API to retrieve the article summary
-    const { data } = await getSummary({ articleUrl: article.url });
+    // Call the API to retrieve the article content
+    const { data: articleData } = await getArticleContent({ articleUrl: article.url });
 
-    if (data && data.summary) {
+    if (!articleData || !articleData.articleContent) {
+      console.log('Unable to retrieve article content');
+      return;
+    }
+
+    // Detect the language of the article content
+    const detectedLanguage = langdetect.detect(articleData.articleContent);
+
+    // Set the language based on detection
+    const language = detectedLanguage === 'en' ? 'en' : 'fr';
+
+    // Call the API to retrieve the article summary with the detected language
+    const { data: summaryData } = await getSummary({ articleUrl: article.url, language });
+
+    if (summaryData && summaryData.summary) {
       // If summary is available, update the state and store it in local storage
-      const newArticle = { ...article, summary: data.summary };
+      const newArticle = { ...article, summary: summaryData.summary };
       const updatedArticles = [newArticle, ...allArticles];
 
       setArticle(newArticle);
       setAllArticles(updatedArticles);
-      console.log(newArticle);
 
       localStorage.setItem('articles', JSON.stringify(updatedArticles));
     } else {
       console.log('Unable to retrieve summary');
     }
   };
+
+  // Fetch article content using a custom query hook
+  const [getArticleContent] = useLazyGetArticleContentQuery();
 
   // Fetch article summaries using a custom query hook
   const [getSummary, { error, isFetching }] = useLazyGetSummaryQuery();
@@ -59,7 +74,7 @@ const Demo = () => {
   const handleCopy = (copyURL) => {
     setCopied(copyURL);
     navigator.clipboard.writeText(copyURL);
-    setTimeout(() => setCopied(""), 3000); // Reset copied state after 3 seconds
+    setTimeout(() => setCopied(''), 3000); // Reset copied state after 3 seconds
   };
 
   return (
@@ -95,7 +110,6 @@ const Demo = () => {
               className='link_card'
             >
               <div className='copy_btn' onClick={() => handleCopy(item.url)}>
-                {/* Show copy or tick icon based on whether the URL is copied */}
                 <img
                   src={copied === item.url ? tick : copy}
                   alt='copy_icon'
